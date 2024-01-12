@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* File Upload Container */
+        .file-upload {
+            max-width: 600px;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 20px;
+        }
+
+        /* Image Container  */
+        #container {
+            display: flex;
+            flex-wrap: wrap;
+            margin: -10px;
+        }
+
+        #container>div {
+            box-sizing: border-box;
+            width: calc(33.33% - 20px);
+            position: relative;
+            margin: 10px;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Image Styling  */
+        #container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px 8px 0 0;
+        }
+
+        /* Delete Icon Styling  */
+        .position-absoulte {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            cursor: pointer;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 4px;
+            border-radius: 30%;
+            color: #ff5858;
+            font-weight: bold;
+        }
+
+        #button {
+            cursor: pointer;
+            padding: 10px;
+            background-color: #48D4B4;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease;
+        }
+
+        #button:hover {
+            background-color: #3aa78d;
+        }
+
+        .swal2-popup {
+            font-size: 1rem;
+        }
+
+        .swal2-title {
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <form method="post" enctype="multipart/form-data" id="form" class="file-upload">
+        <div class="file-upload">
+            <div id="container"></div>
+            <div id="fileInputsContainer">
+                <button type="button" id="button" onclick="document.getElementById('image').click()">Click here to Upload images</button>
+                <input type="file" id="image" name="Image[]" class="preview-image" onchange="image_select()" multiple="" maxlength="5" style="display: none;" />
+            </div>
+        </div>
+    </form>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="text/javascript">
+        var images = [];
+
+        function image_select() {
+            var imageInput = document.getElementById('image');
+            var selectedImages = imageInput.files;
+
+            if (images.length + selectedImages.length > 5) {
+                Swal.fire({
+                    title: "Limit exceeded",
+                    text: "User can upload only 5 images",
+                    icon: "error",
+                    confirmButtonColor: '#48D4B4',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            validateImages(selectedImages);
+        }
+
+        function validateImages(selectedImages) {
+            for (var i = 0; i < selectedImages.length; i++) {
+                var image = selectedImages[i];
+                var validTypes = ['image/jpeg', 'image/png'];
+                var maxSize = 2 * 1024 * 1024;
+
+                if (validTypes.indexOf(image.type) === -1) {
+                    Swal.fire({
+                        title: "Invalid Image Type",
+                        text: "Please upload only JPEG,PNG, images",
+                        icon: "error",
+                        confirmButtonColor: '#48D4B4',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
+
+                if (image.size > maxSize) {
+                    Swal.fire({
+                        title: "Image Size Exceeded",
+                        text: "Please upload images with a size less than 2MB",
+                        icon: "error",
+                        confirmButtonColor: '#48D4B4',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
+
+                images.push({
+                    "file": image,
+                    "url": URL.createObjectURL(image),
+                });
+            }
+
+            document.getElementById('container').innerHTML = image_show();
+        }
+
+        function image_show() {
+            var imageHTML = "";
+            images.forEach((i) => {
+                imageHTML += `<div>
+                    <img src="${i.url}" alt="Image" name="${i.file.name}">
+                    <span class="position-absoulte" onclick="confirm_delete_image('${i.file.name}', ${images.indexOf(i)})">&times;</span>
+                </div>`;
+            });
+            return imageHTML;
+        }
+
+        function confirm_delete_image(imageName, index) {
+            Swal.fire({
+                title: `Are you sure you want to remove the image '${imageName}'?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#48D4B4', 
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, remove it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    delete_image(index);
+                }
+            });
+        }
+
+        function delete_image(index) {
+            images.splice(index, 1);
+            document.getElementById('container').innerHTML = image_show();
+        }
+    </script>
+
+</body>
+
+</html>
